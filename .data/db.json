@@ -1,0 +1,157 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "openId": "admin",
+      "name": "مدير الجمعية",
+      "email": "info@acsd.sa",
+      "loginMethod": "local",
+      "role": "admin",
+      "createdAt": "2026-10-12T19:38:11.727Z",
+      "updatedAt": "2026-10-12T19:45:09.021Z",
+      "lastSignedIn": "2026-10-12T19:45:09.021Z"
+    }
+  ],
+  "contentItems": [
+    {
+      "id": 1,
+      "type": "news",
+      "title": "تدشين المبادرة التعاونية لتطوير المدرجات الزراعية",
+      "summary": "أطلقت الجمعية التعاونية الزراعية للتطوير والاستدامة مبادرة نوعية لدعم المزارعين في تأهيل المدرجات وحصاد مياه الأمطار.",
+      "body": "تستهدف المبادرة تمكين المزارعين المحليين من تطبيق أفضل الممارسات في الحفاظ على التربة واستصلاح الأراضي الزراعية وفق أعلى معايير الاستدامة البيئية والإنتاجية.",
+      "imageUrl": "/storage/content-images/news-terraces.jpg",
+      "documentCategory": null,
+      "documentYear": null,
+      "downloadCount": 0,
+      "status": "published",
+      "publishedAt": "2026-10-09T19:38:11.727Z",
+      "updatedAt": "2026-10-09T19:38:11.727Z",
+      "eventStartsAt": null,
+      "eventLocation": null
+    },
+    {
+      "id": 2,
+      "type": "news",
+      "title": "ورشة عمل متقدمة في الإرشاد الزراعي وإدارة الموارد المائية",
+      "summary": "نظمت الجمعية لقاءً تدريبيًا بمشاركة نخبة من الخبراء الزراعيين لاستعراض أحدث تقنيات الري الحديث وترشيد استهلاك المياه.",
+      "body": "شهدت الورشة تفاعلاً واسعاً من مزارعي المنطقة، حيث تم استعراض حلول عملية لرفع كفاءة استهلاك المياه وزيادة الإنتاجية المحصولية مع الحفاظ على التوازن البيئي.",
+      "imageUrl": "/storage/content-images/news-training.jpg",
+      "documentCategory": null,
+      "documentYear": null,
+      "downloadCount": 0,
+      "status": "published",
+      "publishedAt": "2026-10-05T19:38:11.727Z",
+      "updatedAt": "2026-10-05T19:38:11.727Z",
+      "eventStartsAt": null,
+      "eventLocation": null
+    },
+    {
+      "id": 3,
+      "type": "event",
+      "title": "الملتقى السنوي الأول للتنمية الزراعية المستدامة",
+      "summary": "ملتقى يجمع المزارعين والمختصين لتبادل الخبرات واستعراض الفرص الاستثمارية في القطاع الزراعي التعاوني.",
+      "body": "محاور الملتقى تتناول الابتكار الزراعي، سلاسل الإمداد، والتسويق التعاوني للمنتجات الزراعية المحلية.",
+      "imageUrl": "/storage/content-images/event-conference.jpg",
+      "documentCategory": null,
+      "documentYear": null,
+      "downloadCount": 0,
+      "status": "published",
+      "publishedAt": "2026-10-12T19:38:11.727Z",
+      "updatedAt": "2026-10-12T19:38:11.727Z",
+      "eventStartsAt": "2026-10-26T19:38:11.727Z",
+      "eventLocation": "مركز الفعاليات الزراعية - القاعة الرئيسية"
+    },
+    {
+      "id": 4,
+      "type": "achievement",
+      "title": "تأهيل 150 مزرعة محلية وتطبيق أنظمة الري الذكي",
+      "summary": "نجحت الجمعية في دعم وتأهيل أكثر من 150 مزرعة لتطبيق تقنيات الري المرشد والزراعة العضوية المستدامة.",
+      "body": null,
+      "imageUrl": null,
+      "documentCategory": null,
+      "documentYear": null,
+      "downloadCount": 0,
+      "status": "published",
+      "publishedAt": "2026-10-12T19:38:11.727Z",
+      "updatedAt": "2026-10-12T19:38:11.727Z",
+      "eventStartsAt": null,
+      "eventLocation": null
+    },
+    {
+      "id": 5,
+      "type": "document",
+      "title": "تقرير الحوكمة والشفافية لعام 2025",
+      "summary": "التقرير السنوي الشامل حول تطبيق معايير الحوكمة والامتثال المؤسسي والشفافية المالية في الجمعية.",
+      "body": null,
+      "imageUrl": "/storage/governance-documents/report_2025.pdf",
+      "documentCategory": "governance",
+      "documentYear": 2025,
+      "downloadCount": 42,
+      "status": "published",
+      "publishedAt": "2026-10-12T19:38:11.727Z",
+      "updatedAt": "2026-10-12T19:38:11.727Z",
+      "eventStartsAt": null,
+      "eventLocation": null
+    }
+  ],
+  "eventRegistrations": [],
+  "contactMessages": [],
+  "contactAttachments": [],
+  "contactReplies": [],
+  "surveys": [
+    {
+      "id": 1,
+      "title": "استبيان قياس احتياجات المزارعين وتطوير الخدمات التعاونية",
+      "description": "نهدف من خلال هذا الاستبيان إلى معرفة احتياجاتكم وتطوير البرامج والمبادرات الزراعية بما يحقق أهداف التنمية المستدامة.",
+      "status": "published",
+      "createdAt": "2026-10-12T19:38:11.727Z",
+      "updatedAt": "2026-10-12T19:38:11.727Z"
+    }
+  ],
+  "surveyQuestions": [
+    {
+      "id": 1,
+      "surveyId": 1,
+      "prompt": "ما نوع النشاط الزراعي الرئيسي في مزرعتكم؟",
+      "helpText": "يرجى تحديد النشاط الأساسي",
+      "type": "single_choice",
+      "optionsJson": "[\"محاصيل حقلية وخضروات\",\"أشجار الفاكهة والنخيل\",\"زراعة بيوت محمية\",\"تربية نحل ومواشي\"]",
+      "isRequired": "yes",
+      "position": 0
+    },
+    {
+      "id": 2,
+      "surveyId": 1,
+      "prompt": "كيف تقيمون مستوى خدمات الدعم والإرشاد الزراعي المقدمة؟",
+      "helpText": "1 يعني غير راضٍ تماماً، و5 يعني راضٍ جداً",
+      "type": "rating",
+      "optionsJson": "[]",
+      "isRequired": "yes",
+      "position": 1
+    },
+    {
+      "id": 3,
+      "surveyId": 1,
+      "prompt": "ما هي أبرز المقترحات أو التحديات التي ترغبون في إيصالها لإدارة الجمعية؟",
+      "helpText": "ملاحظاتكم تسهم في تطوير برامجنا",
+      "type": "text",
+      "optionsJson": "[]",
+      "isRequired": "no",
+      "position": 2
+    }
+  ],
+  "surveyResponses": [],
+  "surveyAnswers": [],
+  "counters": {
+    "users": 1,
+    "contentItems": 5,
+    "eventRegistrations": 0,
+    "contactMessages": 0,
+    "contactAttachments": 0,
+    "contactReplies": 0,
+    "surveys": 1,
+    "surveyQuestions": 3,
+    "surveyResponses": 0,
+    "surveyAnswers": 0
+  }
+}
