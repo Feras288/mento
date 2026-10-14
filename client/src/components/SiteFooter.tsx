@@ -109,13 +109,13 @@ export default function SiteFooter() {
               </a>
 
               <a
-                href="tel:+966173250000"
+                href="tel:+966533198555"
                 className="flex items-center gap-3 transition-colors hover:text-[#e6bd67]"
               >
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/10 text-[#e6bd67]">
                   <Phone className="h-4 w-4" />
                 </span>
-                <span dir="ltr">017 325 0000</span>
+                <span dir="ltr">053 319 8555</span>
               </a>
 
               <div className="flex items-start gap-3">

@@ -1,21 +1,44 @@
 import { Button } from "@/components/ui/button";
 import { navigationItems } from "@/content/siteContent";
-import { ArrowLeft, Menu, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, ChevronDown, Menu, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 
-const logoUrl = "/storage/acsd-official-logo_112cc60c.jpg";
+const logoUrl = "/images/darb/acsd_logo.png";
+
+const aboutSubItems = [
+  { href: "/about#من-نحن", label: "نبذة عن الجمعية (من نحن)" },
+  { href: "/about#كلمة-رئيس-المجلس", label: "كلمة رئيس مجلس الإدارة" },
+  { href: "/about#أهداف-الجمعية", label: "أهداف الجمعية" },
+  { href: "/about#مجلس-الإدارة", label: "أعضاء مجلس الإدارة" },
+  { href: "/about#سجل-المساهمين", label: "أسماء المساهمين" },
+  { href: "/about#طريقة-المساهمة", label: "طريقة المساهمة" },
+];
 
 export default function SiteHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAboutDropdownOpen, setIsAboutDropdownOpen] = useState(false);
+  const [isMobileAboutExpanded, setIsMobileAboutExpanded] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [location] = useLocation();
+  const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 18);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const handleMouseEnter = () => {
+    if (dropdownTimeoutRef.current) clearTimeout(dropdownTimeoutRef.current);
+    setIsAboutDropdownOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    dropdownTimeoutRef.current = setTimeout(() => {
+      setIsAboutDropdownOpen(false);
+    }, 200);
+  };
 
   return (
     <header
@@ -40,9 +63,9 @@ export default function SiteHeader() {
             <img
               src={logoUrl}
               alt="شعار الجمعية"
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain p-0.5"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = "/images/acsd-official-logo.jpg";
+                (e.target as HTMLImageElement).src = "/storage/acsd-official-logo_112cc60c.jpg";
               }}
             />
           </span>
@@ -57,12 +80,59 @@ export default function SiteHeader() {
         </a>
 
         {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-2 lg:flex xl:gap-3" aria-label="التنقل الرئيسي">
+        <nav className="hidden items-center gap-1.5 lg:flex xl:gap-2.5" aria-label="التنقل الرئيسي">
           {navigationItems.map(item => {
             const isActive =
               item.href === "/"
                 ? location === "/"
                 : location === item.href || location.startsWith(`${item.href}/`);
+
+            if (item.href === "/about") {
+              return (
+                <div
+                  key={item.href}
+                  className="relative"
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <a
+                    href={item.href}
+                    className={`inline-flex items-center gap-1 rounded-full px-3.5 py-1.5 text-sm font-bold transition-all duration-200 ${
+                      isActive
+                        ? "bg-[#165B2A] text-white shadow-sm"
+                        : "text-[#315441] hover:bg-[#e8f0df] hover:text-[#155029]"
+                    }`}
+                  >
+                    <span>{item.label}</span>
+                    <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200" />
+                  </a>
+
+                  {/* Dropdown Menu */}
+                  {isAboutDropdownOpen && (
+                    <div className="absolute right-0 top-full mt-1.5 w-60 rounded-2xl border border-[#d9c995] bg-[#fbf8ed] p-2 shadow-[0_15px_35px_rgba(22,91,42,0.12)] backdrop-blur animate-in fade-in-50 zoom-in-95">
+                      <div className="border-b border-[#e5dcb8] pb-1.5 mb-1.5 px-3 pt-1">
+                        <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-[#a67017]">
+                          أقسام عن الجمعية
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        {aboutSubItems.map(sub => (
+                          <a
+                            key={sub.href}
+                            href={sub.href}
+                            onClick={() => setIsAboutDropdownOpen(false)}
+                            className="rounded-xl px-3 py-2 text-xs font-bold text-[#2a4d37] transition-colors hover:bg-[#165B2A] hover:text-white"
+                          >
+                            {sub.label}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             return (
               <a
                 key={item.href}
@@ -112,6 +182,50 @@ export default function SiteHeader() {
                 item.href === "/"
                   ? location === "/"
                   : location === item.href || location.startsWith(`${item.href}/`);
+
+              if (item.href === "/about") {
+                return (
+                  <div key={item.href} className="flex flex-col">
+                    <div className="flex items-center justify-between rounded-xl">
+                      <a
+                        href={item.href}
+                        onClick={() => setIsMenuOpen(false)}
+                        className={`flex min-h-11 flex-1 items-center rounded-xl px-4 py-2.5 text-sm font-bold transition-colors ${
+                          isActive
+                            ? "bg-[#165B2A] text-white"
+                            : "text-[#315441] hover:bg-[#e8f0df] hover:text-[#155029]"
+                        }`}
+                      >
+                        {item.label}
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => setIsMobileAboutExpanded(v => !v)}
+                        className="p-2.5 text-[#155029]"
+                        aria-label="عرض أقسام عن الجمعية"
+                      >
+                        <ChevronDown className={`h-4 w-4 transition-transform ${isMobileAboutExpanded ? "rotate-180" : ""}`} />
+                      </button>
+                    </div>
+
+                    {isMobileAboutExpanded && (
+                      <div className="my-1 mr-4 flex flex-col gap-1 border-r-2 border-[#165B2A]/30 pr-2">
+                        {aboutSubItems.map(sub => (
+                          <a
+                            key={sub.href}
+                            href={sub.href}
+                            onClick={() => setIsMenuOpen(false)}
+                            className="rounded-lg px-3 py-2 text-xs font-bold text-[#456351] hover:bg-[#e8f0df] hover:text-[#155029]"
+                          >
+                            {sub.label}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
               return (
                 <a
                   key={item.href}

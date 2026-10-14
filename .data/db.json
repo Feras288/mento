@@ -140,8 +140,28 @@
       "position": 2
     }
   ],
-  "surveyResponses": [],
-  "surveyAnswers": [],
+  "surveyResponses": [
+    {
+      "id": 1,
+      "surveyId": 1,
+      "respondentTokenHash": "c4873f6a7e73a65b049047419fa4e19709b8e856db178734f95bb0a1b820c45a",
+      "submittedAt": "2026-10-14T19:02:07.040Z"
+    }
+  ],
+  "surveyAnswers": [
+    {
+      "id": 1,
+      "responseId": 1,
+      "questionId": 1,
+      "value": "تربية نحل ومواشي"
+    },
+    {
+      "id": 2,
+      "responseId": 1,
+      "questionId": 2,
+      "value": "2"
+    }
+  ],
   "counters": {
     "users": 1,
     "contentItems": 5,
@@ -151,7 +171,7 @@
     "contactReplies": 0,
     "surveys": 1,
     "surveyQuestions": 3,
-    "surveyResponses": 0,
-    "surveyAnswers": 0
+    "surveyResponses": 1,
+    "surveyAnswers": 2
   }
 }
