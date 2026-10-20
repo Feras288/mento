@@ -86,7 +86,7 @@ const surveyInput = z.object({
   title: z.string().trim().min(5).max(240),
   description: z.string().trim().max(2000).optional().or(z.literal("")),
   status: z.enum(["draft", "published"]),
-  questions: z.array(surveyQuestionInput).min(1).max(12),
+  questions: z.array(surveyQuestionInput).min(1).max(50),
 });
 
 const toSafeFileName = (fileName: string) =>
@@ -256,7 +256,7 @@ export const appRouter = router({
     submit: publicProcedure.input(z.object({
       surveyId: z.number().int().positive(),
       respondentToken: z.string().regex(/^[a-f0-9-]{36}$/i),
-      answers: z.array(z.object({ questionId: z.number().int().positive(), value: z.string().trim().max(2000) })).max(12),
+      answers: z.array(z.object({ questionId: z.number().int().positive(), value: z.string().trim().max(2000) })).max(50),
     })).mutation(async ({ input }) => {
       const active = await db.getPublishedSurvey();
       if (!active || active.survey.id !== input.surveyId) throw new TRPCError({ code: "NOT_FOUND", message: "SURVEY_UNAVAILABLE" });
@@ -276,7 +276,8 @@ export const appRouter = router({
         }
         if (question.type === "single_choice") {
           const options = JSON.parse(question.optionsJson ?? "[]") as string[];
-          if (!options.includes(value)) throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_SURVEY_OPTION" });
+          const isAllowed = options.includes(value) || (options.some(opt => opt.includes("أخرى")) && value.startsWith("أخرى"));
+          if (!isAllowed) throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_SURVEY_OPTION" });
         }
         return [{ questionId: question.id, value }];
       });

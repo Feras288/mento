@@ -3,8 +3,8 @@ import { storageKeyFromUrl } from "./pdfPreview";
 
 describe("storageKeyFromUrl", () => {
   it("يستخرج مفتاح وثيقة مخزنة من المسار الداخلي", () => {
-    expect(storageKeyFromUrl("/manus-storage/governance-documents/report_2025.pdf")).toBe("governance-documents/report_2025.pdf");
-    expect(storageKeyFromUrl("/storage/governance-documents/report_2025.pdf")).toBe("governance-documents/report_2025.pdf");
+    expect(storageKeyFromUrl("/manus-storage/governance-documents/acsd-sop-com-001-integrity-compliance.pdf")).toBe("governance-documents/acsd-sop-com-001-integrity-compliance.pdf");
+    expect(storageKeyFromUrl("/storage/governance-documents/acsd-sop-com-001-integrity-compliance.pdf")).toBe("governance-documents/acsd-sop-com-001-integrity-compliance.pdf");
   });
 
   it("يرفض الروابط الخارجية والمسارات غير الآمنة", () => {
