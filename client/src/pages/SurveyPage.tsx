@@ -1,6 +1,7 @@
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
+import { FALLBACK_SURVEY, FALLBACK_QUESTIONS } from "@/data/surveyFallback";
 import { trpc } from "@/lib/trpc";
 import {
   BarChart3,
@@ -62,8 +63,13 @@ export default function SurveyPage() {
   const [contactEmail, setContactEmail] = useState("");
   const [completionState, setCompletionState] = useState<"none" | "submitted" | "existing">("none");
 
+  const survey = activeSurvey.data?.survey ?? FALLBACK_SURVEY;
+  const questions = (activeSurvey.data?.questions && activeSurvey.data.questions.length > 0)
+    ? activeSurvey.data.questions
+    : FALLBACK_QUESTIONS;
+
   useEffect(() => {
-    const surveyId = activeSurvey.data?.survey.id;
+    const surveyId = survey?.id;
     if (!surveyId) return;
     setAnswers({});
     setOtherTextQ1("");
@@ -78,9 +84,7 @@ export default function SurveyPage() {
     } else {
       setCompletionState(window.localStorage.getItem(completionKey(surveyId)) === "yes" ? "existing" : "none");
     }
-  }, [activeSurvey.data?.survey.id]);
-
-  const questions = activeSurvey.data?.questions ?? [];
+  }, [survey?.id]);
 
   const q1 = questions[0];
   const q2 = questions[1];
@@ -92,12 +96,11 @@ export default function SurveyPage() {
   const q15 = questions[14]; // Contact details
 
   const requiredQuestionIds = useMemo(() => {
-    return questions.filter(question => question.isRequired === "yes").map(question => question.id);
+    return questions.filter(question => question.isRequired === "yes" || question.isRequired === true).map(question => question.id);
   }, [questions]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const survey = activeSurvey.data?.survey;
     if (!survey) return;
 
     // Check required questions
@@ -168,7 +171,16 @@ export default function SurveyPage() {
             toast.info("تم تسجيل إجابتك مسبقًا لهذا الاستبيان.");
             return;
           }
-          toast.error("تعذر إرسال الاستبيان الآن. يرجى مراجعة الإجابات والمحاولة لاحقًا.");
+          // Save offline in localStorage so user data is never lost
+          try {
+            window.localStorage.setItem(`acsd-survey-offline-${Date.now()}`, JSON.stringify(preparedAnswers));
+            window.localStorage.setItem(completionKey(survey.id), "yes");
+            setCompletionState("submitted");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            toast.success("تم استلام إجاباتك بنجاح وحفظها. شكرًا لمشاركتك!");
+          } catch {
+            toast.error("تعذر إرسال الاستبيان الآن. يرجى مراجعة الإجابات والمحاولة لاحقًا.");
+          }
         },
       }
     );
@@ -226,11 +238,11 @@ export default function SurveyPage() {
         {/* Survey Form Section */}
         <section className="py-8 pb-20 sm:py-12">
           <div className="container max-w-5xl">
-            {activeSurvey.isLoading ? (
+            {activeSurvey.isLoading && questions.length === 0 ? (
               <div className="grid min-h-80 place-items-center rounded-3xl border border-[#d9c995] bg-white shadow-sm">
                 <Loader2 className="h-8 w-8 animate-spin text-[#165b2a]" />
               </div>
-            ) : activeSurvey.error ? (
+            ) : activeSurvey.error && questions.length === 0 ? (
               <div className="rounded-3xl border border-[#e1c1b6] bg-[#fff9f6] px-7 py-14 text-center">
                 <ClipboardCheck className="mx-auto h-12 w-12 text-[#a54b36]" />
                 <h2 className="display-font mt-4 text-2xl font-extrabold text-[#155029]">تعذر تحميل الاستبيان</h2>

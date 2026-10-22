@@ -1,3 +1,4 @@
+import { FALLBACK_GOVERNANCE_DOCS } from "@/data/governanceDocumentsFallback";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
 import {
@@ -964,7 +965,7 @@ function PdfReader({
   const availableHeight = Math.max(readerSize.height - 32, 280);
   const basePageWidth = Math.floor(Math.min(availableWidth, availableHeight / pageAspectRatio));
   const pageWidth = Math.round(basePageWidth * zoomScale);
-  const previewUrl = `/api/documents/${preview.id}/preview`;
+  const previewUrl = preview.url || `/api/documents/${preview.id}/preview`;
 
   const changePage = (direction: number) => {
     const total = pageCount > 0 ? pageCount : (meta.pages > 0 ? meta.pages : 1);
@@ -1331,7 +1332,10 @@ export default function GovernanceLibrary() {
 
   const utils = trpc.useUtils();
   const documents = trpc.content.publicList.useQuery();
-  const items = useMemo(() => (documents.data ?? []).filter(item => item.type === "document"), [documents.data]);
+  const items = useMemo(() => {
+    const fetched = (documents.data ?? []).filter(item => item.type === "document");
+    return fetched.length > 0 ? fetched : FALLBACK_GOVERNANCE_DOCS;
+  }, [documents.data]);
 
   // Extract available years
   const years = useMemo(() => {
