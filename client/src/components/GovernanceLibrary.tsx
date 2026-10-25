@@ -1322,6 +1322,50 @@ function PdfReader({
   );
 }
 
+function GovernanceDocumentSkeleton() {
+  return (
+    <article
+      className="group relative flex flex-col justify-between overflow-hidden rounded-bl-[2.8rem] rounded-tr-[2.8rem] border border-[#d9c995] bg-white p-6 shadow-[0_12px_28px_rgba(22,91,42,0.06)] sm:p-7 animate-pulse"
+      aria-hidden="true"
+    >
+      <div className="absolute left-0 top-0 h-24 w-24 rounded-br-[4rem] bg-[#e8f0df]/40" />
+
+      <div>
+        {/* Card Header: Icon + Badge */}
+        <div className="relative flex flex-wrap items-start justify-between gap-3">
+          <div className="h-13 w-13 rounded-2xl bg-[#155029]/15" />
+          <div className="h-6 w-20 rounded-full bg-[#d9c995]/30" />
+        </div>
+
+        {/* Badges Bar */}
+        <div className="mt-5 flex flex-wrap items-center gap-2">
+          <div className="h-6 w-24 rounded-lg bg-[#f0eedf]" />
+          <div className="h-6 w-20 rounded-lg bg-[#f8edd0]" />
+          <div className="h-6 w-16 rounded-lg bg-[#e8f0df]" />
+        </div>
+
+        {/* Title & Summary */}
+        <div className="mt-4 space-y-2.5">
+          <div className="h-6 w-4/5 rounded-md bg-[#155029]/20" />
+          <div className="h-4 w-full rounded-md bg-[#155029]/10" />
+          <div className="h-4 w-2/3 rounded-md bg-[#155029]/10" />
+        </div>
+
+        {/* Tracks Skeleton Box */}
+        <div className="mt-4 h-16 rounded-xl border border-[#e8dfc3] bg-[#fbf9f2]/70" />
+      </div>
+
+      {/* Footer */}
+      <div className="mt-6 border-t border-[#ebdcb3] pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="h-4 w-24 rounded-md bg-[#66816d]/20" />
+          <div className="h-9 w-32 rounded-full bg-[#155029]/15" />
+        </div>
+      </div>
+    </article>
+  );
+}
+
 export default function GovernanceLibrary() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<"all" | "manual" | "policy" | "sop" | "strategy" | "annual_report">("all");
@@ -1331,7 +1375,10 @@ export default function GovernanceLibrary() {
   const [preview, setPreview] = useState<PreviewDocument | null>(null);
 
   const utils = trpc.useUtils();
-  const documents = trpc.content.publicList.useQuery();
+  const documents = trpc.content.publicList.useQuery(undefined, {
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
   const items = useMemo(() => {
     const fetched = (documents.data ?? []).filter(item => item.type === "document");
     return fetched.length > 0 ? fetched : FALLBACK_GOVERNANCE_DOCS;
@@ -1820,8 +1867,14 @@ export default function GovernanceLibrary() {
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-extrabold text-[#a67017]">
-              {filteredAndSortedItems.length}{" "}
-              {filteredAndSortedItems.length === 1 ? "وثيقة مطابقة" : "وثائق مطابقة"}
+              {documents.isPending ? (
+                <span className="inline-block h-4 w-20 rounded bg-[#a67017]/20 animate-pulse align-middle" />
+              ) : (
+                <>
+                  {filteredAndSortedItems.length}{" "}
+                  {filteredAndSortedItems.length === 1 ? "وثيقة مطابقة" : "وثائق مطابقة"}
+                </>
+              )}
             </span>
 
             {searchQuery && (
@@ -1857,27 +1910,49 @@ export default function GovernanceLibrary() {
 
         {/* Documents Grid */}
         <div className="mt-7 grid gap-6 lg:grid-cols-2">
-          {documents.isLoading ? (
-            <div className="col-span-full grid min-h-60 place-items-center">
-              <Loader2 className="h-8 w-8 animate-spin text-[#a67017]" />
+          {documents.isPending ? (
+            Array.from({ length: 4 }).map((_, idx) => (
+              <GovernanceDocumentSkeleton key={idx} />
+            ))
+          ) : documents.isError ? (
+            <div className="col-span-full rounded-bl-[3rem] rounded-tr-[3rem] border border-[#e1c1b6] bg-[#fff9f6] px-6 py-14 text-center">
+              <AlertTriangle className="mx-auto h-10 w-10 text-[#a54b36]" />
+              <h3 className="display-font mt-4 text-xl font-bold text-[#155029]">تعذر تحميل وثائق الحوكمة</h3>
+              <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[#6d615d]">
+                حدث خطأ أثناء الاتصال بالخادم. يرجى إعادة المحاولة بعد قليل.
+              </p>
+              <button
+                type="button"
+                onClick={() => documents.refetch()}
+                className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#155029] px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-[#10461f]"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                إعادة المحاولة
+              </button>
             </div>
-          ) : filteredAndSortedItems.length ? (
+          ) : filteredAndSortedItems.length > 0 ? (
             filteredAndSortedItems.map(item => documentCard(item))
           ) : (
             <div className="col-span-full rounded-bl-[3rem] rounded-tr-[3rem] border border-dashed border-[#c9b978] bg-white/70 px-6 py-14 text-center">
               <ShieldCheck className="mx-auto h-10 w-10 text-[#a67017]" />
-              <h3 className="display-font mt-4 text-xl font-bold text-[#155029]">لا توجد وثائق مطابقة لخيارات الفرز الحالية</h3>
+              <h3 className="display-font mt-4 text-xl font-bold text-[#155029]">
+                {hasActiveFilters ? "لا توجد وثائق مطابقة لخيارات الفرز الحالية" : "لا توجد وثائق معتمدة منشورة حاليًا"}
+              </h3>
               <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[#617b68]">
-                جرّب تعديل كلمات البحث، أو تغيير مستوى التصنيف أو سنة الإصدار للوصول إلى الوثائق المطلوبة.
+                {hasActiveFilters
+                  ? "جرّب تعديل كلمات البحث، أو تغيير مستوى التصنيف أو سنة الإصدار للوصول إلى الوثائق المطلوبة."
+                  : "سيتم إدراج الوثائق واللوائح المعتمدة هنا فور اعتمادها ونشرها من قبل الجمعية."}
               </p>
-              <button
-                type="button"
-                onClick={resetAllFilters}
-                className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#155029] px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-[#10461f]"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                عرض جميع الوثائق
-              </button>
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={resetAllFilters}
+                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#155029] px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-[#10461f]"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  عرض جميع الوثائق
+                </button>
+              )}
             </div>
           )}
         </div>

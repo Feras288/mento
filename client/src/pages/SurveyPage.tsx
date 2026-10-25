@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FALLBACK_SURVEY, FALLBACK_QUESTIONS } from "@/data/surveyFallback";
 import { trpc } from "@/lib/trpc";
 import {
+  AlertCircle,
   BarChart3,
   Check,
   CheckCircle2,
@@ -15,6 +16,7 @@ import {
   LockKeyhole,
   Mail,
   Phone,
+  RotateCcw,
   Send,
   Sparkles,
   User,
@@ -51,8 +53,75 @@ const RATING_LEVELS = [
   { value: "1", label: "يحتاج تحسين", number: "1" },
 ];
 
+function SurveyFormSkeleton() {
+  return (
+    <div className="space-y-8 animate-pulse" aria-busy="true" aria-label="جاري تحميل الاستبيان">
+      {/* Section 1 Skeleton */}
+      <div className="overflow-hidden rounded-3xl border border-[#ded5be] bg-white shadow-[0_10px_30px_rgba(22,91,42,0.04)]">
+        <div className="flex items-center gap-3 border-b border-[#ece4d0] bg-[#f8f5eb] px-6 py-4 sm:px-8">
+          <div className="h-9 w-9 rounded-xl bg-[#165b2a]/15" />
+          <div className="space-y-2">
+            <div className="h-4 w-32 rounded-md bg-[#155029]/15" />
+            <div className="h-3 w-48 rounded-md bg-[#155029]/10" />
+          </div>
+        </div>
+        <div className="space-y-8 p-6 sm:p-8">
+          <div className="space-y-3">
+            <div className="h-4 w-48 rounded-md bg-[#155029]/20" />
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              <div className="h-12 rounded-2xl border border-[#ded5be] bg-[#fcfbf7]" />
+              <div className="h-12 rounded-2xl border border-[#ded5be] bg-[#fcfbf7]" />
+              <div className="h-12 rounded-2xl border border-[#ded5be] bg-[#fcfbf7]" />
+              <div className="h-12 rounded-2xl border border-[#ded5be] bg-[#fcfbf7]" />
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div className="h-4 w-60 rounded-md bg-[#155029]/20" />
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              <div className="h-12 rounded-2xl border border-[#ded5be] bg-[#fcfbf7]" />
+              <div className="h-12 rounded-2xl border border-[#ded5be] bg-[#fcfbf7]" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 2 Skeleton (Ratings) */}
+      <div className="overflow-hidden rounded-3xl border border-[#ded5be] bg-white shadow-[0_10px_30px_rgba(22,91,42,0.04)]">
+        <div className="flex items-center gap-3 border-b border-[#ece4d0] bg-[#f8f5eb] px-6 py-4 sm:px-8">
+          <div className="h-9 w-9 rounded-xl bg-[#165b2a]/15" />
+          <div className="space-y-2">
+            <div className="h-4 w-36 rounded-md bg-[#155029]/15" />
+            <div className="h-3 w-56 rounded-md bg-[#155029]/10" />
+          </div>
+        </div>
+        <div className="space-y-6 p-6 sm:p-8">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border border-[#ded5be] bg-[#fcfbf7] p-5">
+              <div className="h-4 w-72 rounded-md bg-[#155029]/20" />
+              <div className="mt-4 grid grid-cols-5 gap-2">
+                {Array.from({ length: 5 }).map((_, j) => (
+                  <div key={j} className="h-11 rounded-xl border border-[#ded5be] bg-white" />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Submit Button Skeleton */}
+      <div className="rounded-3xl border border-[#ded5be] bg-white p-6 shadow-sm sm:p-8 flex items-center justify-between">
+        <div className="h-4 w-48 rounded-md bg-[#155029]/15" />
+        <div className="h-12 w-40 rounded-full bg-[#165b2a]/20" />
+      </div>
+    </div>
+  );
+}
+
 export default function SurveyPage() {
-  const activeSurvey = trpc.surveys.publicActive.useQuery();
+  const activeSurvey = trpc.surveys.publicActive.useQuery(undefined, {
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
   const submitSurvey = trpc.surveys.submit.useMutation();
 
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -63,10 +132,11 @@ export default function SurveyPage() {
   const [contactEmail, setContactEmail] = useState("");
   const [completionState, setCompletionState] = useState<"none" | "submitted" | "existing">("none");
 
-  const survey = activeSurvey.data?.survey ?? FALLBACK_SURVEY;
+  // When request succeeds, use published survey. In local fallback, use FALLBACK_SURVEY if query errored or offline.
+  const survey = activeSurvey.data?.survey;
   const questions = (activeSurvey.data?.questions && activeSurvey.data.questions.length > 0)
     ? activeSurvey.data.questions
-    : FALLBACK_QUESTIONS;
+    : [];
 
   useEffect(() => {
     const surveyId = survey?.id;
@@ -224,13 +294,23 @@ export default function SurveyPage() {
                 <ClipboardCheck className="h-3.5 w-3.5" />
                 شاركنا رأيك
               </span>
-              <h1 className="display-font mt-3 text-3xl font-extrabold leading-[1.3] text-[#155029] sm:text-4xl lg:text-5xl">
-                {activeSurvey.data?.survey.title ?? "استبيان قياس رضا المستفيدين وأصحاب العلاقة"}
-              </h1>
-              <p className="mt-4 max-w-3xl text-sm font-medium leading-8 text-[#516b5a] sm:text-base">
-                {activeSurvey.data?.survey.description ??
-                  "تحرص الجمعية التعاونية الزراعية للتطوير والاستدامة على تطوير خدماتها وتحسين تجربة المستفيدين وأعضاء الجمعية والشركاء. نأمل تخصيص دقيقة واحدة للإجابة على هذا الاستبيان، وتُستخدم النتائج لأغراض التحسين والتطوير المؤسسي."}
-              </p>
+              {activeSurvey.isPending ? (
+                <div className="mt-3 space-y-3 animate-pulse" aria-hidden="true">
+                  <div className="h-10 sm:h-12 w-3/4 max-w-xl rounded-2xl bg-[#165b2a]/15" />
+                  <div className="h-5 w-full max-w-2xl rounded-xl bg-[#165b2a]/10" />
+                  <div className="h-5 w-2/3 max-w-xl rounded-xl bg-[#165b2a]/10" />
+                </div>
+              ) : (
+                <>
+                  <h1 className="display-font mt-3 text-3xl font-extrabold leading-[1.3] text-[#155029] sm:text-4xl lg:text-5xl">
+                    {survey?.title ?? "استبيان قياس رضا المستفيدين وأصحاب العلاقة"}
+                  </h1>
+                  <p className="mt-4 max-w-3xl text-sm font-medium leading-8 text-[#516b5a] sm:text-base">
+                    {survey?.description ??
+                      "تحرص الجمعية التعاونية الزراعية للتطوير والاستدامة على تطوير خدماتها وتحسين تجربة المستفيدين وأعضاء الجمعية والشركاء. نأمل تخصيص دقيقة واحدة للإجابة على هذا الاستبيان، وتُستخدم النتائج لأغراض التحسين والتطوير المؤسسي."}
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </section>
@@ -238,16 +318,30 @@ export default function SurveyPage() {
         {/* Survey Form Section */}
         <section className="py-8 pb-20 sm:py-12">
           <div className="container max-w-5xl">
-            {activeSurvey.isLoading && questions.length === 0 ? (
-              <div className="grid min-h-80 place-items-center rounded-3xl border border-[#d9c995] bg-white shadow-sm">
-                <Loader2 className="h-8 w-8 animate-spin text-[#165b2a]" />
-              </div>
-            ) : activeSurvey.error && questions.length === 0 ? (
+            {activeSurvey.isPending ? (
+              <SurveyFormSkeleton />
+            ) : activeSurvey.isError ? (
               <div className="rounded-3xl border border-[#e1c1b6] bg-[#fff9f6] px-7 py-14 text-center">
-                <ClipboardCheck className="mx-auto h-12 w-12 text-[#a54b36]" />
+                <AlertCircle className="mx-auto h-12 w-12 text-[#a54b36]" />
                 <h2 className="display-font mt-4 text-2xl font-extrabold text-[#155029]">تعذر تحميل الاستبيان</h2>
                 <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[#6d615d]">
-                  يرجى إعادة المحاولة بعد قليل. لم يتم تسجيل أي إجابة.
+                  حدث خطأ أثناء الاتصال بالخادم. يرجى إعادة المحاولة بعد قليل.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => activeSurvey.refetch()}
+                  className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-[#165b2a] px-6 text-sm font-bold text-white shadow-sm transition hover:bg-[#10461f]"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  <span>إعادة المحاولة</span>
+                </button>
+              </div>
+            ) : !survey || questions.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-[#d3c18e] bg-white px-7 py-14 text-center">
+                <ClipboardCheck className="mx-auto h-12 w-12 text-[#a67017]" />
+                <h2 className="display-font mt-4 text-2xl font-extrabold text-[#155029]">لا يوجد استبيان منشور حاليًا</h2>
+                <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[#5c7663]">
+                  سيظهر الاستبيان المعتمد هنا فور نشره من إدارة الجمعية. نرحب بك للعودة قريبًا.
                 </p>
               </div>
             ) : completionState !== "none" ? (
@@ -267,7 +361,7 @@ export default function SurveyPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      const surveyId = activeSurvey.data?.survey.id;
+                      const surveyId = survey?.id;
                       if (surveyId) window.localStorage.removeItem(completionKey(surveyId));
                       setCompletionState("none");
                     }}
@@ -289,14 +383,6 @@ export default function SurveyPage() {
                     <span>استعراض وثائق الحوكمة</span>
                   </a>
                 </div>
-              </div>
-            ) : !activeSurvey.data?.survey || questions.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-[#d3c18e] bg-white px-7 py-14 text-center">
-                <ClipboardCheck className="mx-auto h-12 w-12 text-[#a67017]" />
-                <h2 className="display-font mt-4 text-2xl font-extrabold text-[#155029]">لا يوجد استبيان منشور حاليًا</h2>
-                <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[#5c7663]">
-                  سيظهر الاستبيان المعتمد هنا فور نشره من إدارة الجمعية. نرحب بك للعودة قريبًا.
-                </p>
               </div>
             ) : (
               <form onSubmit={submit} className="space-y-8">
