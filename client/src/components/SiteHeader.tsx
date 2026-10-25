@@ -29,6 +29,23 @@ export default function SiteHeader() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location]);
+
+  // Lock body scroll when mobile drawer is open to prevent underlying page scroll
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMenuOpen]);
+
   const handleMouseEnter = () => {
     if (dropdownTimeoutRef.current) clearTimeout(dropdownTimeoutRef.current);
     setIsAboutDropdownOpen(true);
@@ -201,7 +218,7 @@ export default function SiteHeader() {
                       <button
                         type="button"
                         onClick={() => setIsMobileAboutExpanded(v => !v)}
-                        className="p-2.5 text-[#155029]"
+                        className="grid h-11 w-11 place-items-center text-[#155029] active:bg-[#e8f0df] rounded-xl"
                         aria-label="عرض أقسام عن الجمعية"
                       >
                         <ChevronDown className={`h-4 w-4 transition-transform ${isMobileAboutExpanded ? "rotate-180" : ""}`} />

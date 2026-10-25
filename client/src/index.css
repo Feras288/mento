@@ -500,6 +500,15 @@
   }
 }
 
+/* Utility to hide scrollbars on horizontal carousels while keeping scrollability */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 @keyframes mobile-route-leave {
   from { opacity: 1; transform: translateY(0); }
   to { opacity: 0; transform: translateY(0.55rem); }

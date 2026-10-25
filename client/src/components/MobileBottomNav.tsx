@@ -29,7 +29,7 @@ export default function MobileBottomNav() {
 
   return (
     <nav
-      className="mobile-bottom-nav fixed inset-x-3 bottom-3 z-50 rounded-[1.45rem] border border-[#d9c995]/90 bg-[#fbf8ed]/95 px-1.5 pt-1.5 shadow-[0_14px_34px_rgba(16,58,34,0.19)] backdrop-blur lg:hidden"
+      className="mobile-bottom-nav fixed inset-x-3 bottom-3 z-40 rounded-[1.45rem] border border-[#d9c995]/90 bg-[#fbf8ed]/95 px-1.5 pt-1.5 shadow-[0_14px_34px_rgba(16,58,34,0.19)] backdrop-blur lg:hidden"
       aria-label="التنقل السريع للجوال"
     >
       <div className="grid grid-cols-5 gap-0.5" dir="rtl">

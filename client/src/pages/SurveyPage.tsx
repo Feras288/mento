@@ -629,14 +629,14 @@ export default function SurveyPage() {
                                   onClick={() =>
                                     setAnswers(prev => ({ ...prev, [q.id]: level.value }))
                                   }
-                                  className={`flex flex-col items-center justify-center rounded-xl border py-2.5 text-center transition-all ${
+                                  className={`flex flex-col items-center justify-center rounded-xl border px-1 py-2.5 text-center transition-all ${
                                     checked
                                       ? "border-[#165b2a] bg-[#165b2a] text-white shadow-sm"
                                       : "border-[#e0d8c3] bg-white text-[#476050] hover:border-[#b89e5b]"
                                   }`}
                                 >
                                   <span className="text-xs font-extrabold">{level.number}</span>
-                                  <span className="text-[0.62rem] font-bold leading-tight mt-0.5 opacity-90">
+                                  <span className="text-[0.6rem] font-bold leading-tight mt-0.5 opacity-90 break-words">
                                     {level.label}
                                   </span>
                                 </button>
@@ -864,11 +864,11 @@ export default function SurveyPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 shrink-0">
+                  <div className="flex items-center gap-4 w-full sm:w-auto shrink-0">
                     <Button
                       type="submit"
                       disabled={submitSurvey.isPending}
-                      className="h-12 rounded-full bg-[#165b2a] px-8 text-base font-bold text-white shadow-md hover:bg-[#10461f] transition-all cursor-pointer"
+                      className="h-12 w-full rounded-full bg-[#165b2a] px-8 text-base font-bold text-white shadow-md hover:bg-[#10461f] transition-all cursor-pointer sm:w-auto"
                     >
                       {submitSurvey.isPending ? (
                         <>

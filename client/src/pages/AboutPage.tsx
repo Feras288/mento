@@ -244,7 +244,7 @@ export default function AboutPage() {
           aria-label="أقسام الصفحة"
           className="sticky top-[4.7rem] z-40 border-y border-[#d9c995]/70 bg-[#fbf8ed]/95 backdrop-blur-md sm:top-[5.4rem]"
         >
-          <div className="container flex items-center justify-between overflow-x-auto py-2.5">
+          <div className="container flex items-center justify-between overflow-x-auto py-2.5 no-scrollbar">
             <div className="flex min-w-max items-center gap-2 text-xs font-bold sm:text-sm">
               <a
                 href="#من-نحن"

@@ -31,7 +31,7 @@ export default function SiteFooter() {
       {/* Top Banner Accent */}
       <div className="h-1.5 w-full bg-gradient-to-r from-[#165B2A] via-[#E6BD67] to-[#165B2A]" />
 
-      <div className="container py-14 lg:py-16">
+      <div className="container pt-14 pb-24 lg:py-16">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-12 lg:gap-8">
           {/* Brand Info */}
           <div className="lg:col-span-5">

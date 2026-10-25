@@ -19,6 +19,7 @@ import {
   Layers,
   Loader2,
   Maximize2,
+  Minimize2,
   RotateCcw,
   Search,
   ShieldAlert,
@@ -917,6 +918,9 @@ function PdfReader({
   isDownloading: boolean;
 }) {
   const readerRef = useRef<HTMLDivElement>(null);
+  const touchStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
+
   const [pageCount, setPageCount] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
   const [readerSize, setReaderSize] = useState({ width: 0, height: 0 });
@@ -924,6 +928,12 @@ function PdfReader({
   const [loadError, setLoadError] = useState(false);
   const [zoomScale, setZoomScale] = useState(1);
   const [activeTab, setActiveTab] = useState<"reader" | "outline">("reader");
+  const [fitMode, setFitMode] = useState<"width" | "page">(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 640) {
+      return "width";
+    }
+    return "page";
+  });
 
   const meta = useMemo(() => parseDocumentMeta(preview), [preview]);
 
@@ -961,10 +971,19 @@ function PdfReader({
     }
   }, [activeTab]);
 
-  const availableWidth = Math.max(readerSize.width - 32, 220);
-  const availableHeight = Math.max(readerSize.height - 32, 280);
-  const basePageWidth = Math.floor(Math.min(availableWidth, availableHeight / pageAspectRatio));
-  const pageWidth = Math.round(basePageWidth * zoomScale);
+  const isMobile = readerSize.width > 0 ? readerSize.width < 640 : (typeof window !== "undefined" && window.innerWidth < 640);
+  const horizontalMargin = isMobile ? 12 : 32;
+  const verticalMargin = isMobile ? 16 : 32;
+
+  const availableWidth = Math.max(readerSize.width - horizontalMargin, 220);
+  const availableHeight = Math.max(readerSize.height - verticalMargin, 260);
+
+  // In width mode, page fills available width for optimal mobile reading. In page mode, fits whole page in frame.
+  const basePageWidth = fitMode === "width"
+    ? availableWidth
+    : Math.floor(Math.min(availableWidth, availableHeight / pageAspectRatio));
+
+  const pageWidth = Math.max(Math.round(basePageWidth * zoomScale), 180);
   const previewUrl = preview.url || `/api/documents/${preview.id}/preview`;
 
   const changePage = (direction: number) => {
@@ -988,39 +1007,63 @@ function PdfReader({
 
   const resetZoom = () => setZoomScale(1);
 
+  // RTL Swipe handling: Swipe Left -> Next Page, Swipe Right -> Previous Page
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length === 1) {
+      touchStartXRef.current = e.touches[0].clientX;
+      touchStartYRef.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (touchStartXRef.current === null || touchStartYRef.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartXRef.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartYRef.current;
+
+    if (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3) {
+      if (deltaX < 0) {
+        changePage(1);
+      } else {
+        changePage(-1);
+      }
+    }
+    touchStartXRef.current = null;
+    touchStartYRef.current = null;
+  };
+
   return (
-    <div className="mt-2 space-y-4">
+    <div className="flex flex-1 min-h-0 flex-col gap-2.5 sm:gap-4 sm:mt-2">
       {/* Top Controls Toolbar */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-[#d9c995] bg-white p-3 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+      <div className="shrink-0 flex flex-col gap-2.5 rounded-2xl border border-[#d9c995] bg-white p-2.5 shadow-xs sm:flex-row sm:items-center sm:justify-between sm:p-3">
         {/* Navigation & Tabs */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-start">
           <div className="flex items-center rounded-xl bg-[#f3efe2] p-1">
             <button
               type="button"
               onClick={() => setActiveTab("reader")}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold transition-all sm:px-3 ${
                 activeTab === "reader" ? "bg-[#155029] text-white shadow-xs" : "text-[#155029] hover:bg-white/60"
               }`}
             >
               <Eye className="h-3.5 w-3.5" />
-              المعاينة التفاعلية
+              <span>المعاينة التفاعلية</span>
             </button>
             {meta.sectionsOutline && meta.sectionsOutline.length > 0 && (
               <button
                 type="button"
                 onClick={() => setActiveTab("outline")}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold transition-all sm:px-3 ${
                   activeTab === "outline" ? "bg-[#155029] text-white shadow-xs" : "text-[#155029] hover:bg-white/60"
                 }`}
               >
                 <Layers className="h-3.5 w-3.5" />
-                فهرس ومسارات الإجراء ({meta.sectionsOutline.length})
+                <span>فهرس الإجراء ({meta.sectionsOutline.length})</span>
               </button>
             )}
           </div>
 
           {activeTab === "reader" && (
-            <div className="flex items-center gap-1 rounded-xl border border-[#cdbb86] bg-white px-2 py-1">
+            <div className="flex items-center gap-1 rounded-xl border border-[#cdbb86] bg-white px-1.5 py-1 sm:px-2">
               <button
                 type="button"
                 onClick={() => changePage(-1)}
@@ -1031,7 +1074,7 @@ function PdfReader({
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
-              <span className="min-w-24 text-center text-xs font-extrabold text-[#155029]">
+              <span className="min-w-20 text-center text-xs font-extrabold text-[#155029]">
                 صفحة {pageNumber} من {pageCount || meta.pages || "—"}
               </span>
               <button
@@ -1048,59 +1091,84 @@ function PdfReader({
           )}
         </div>
 
-        {/* Zoom & Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Display Mode, Zoom & Action Group */}
+        <div className="flex items-center justify-between gap-1.5 sm:justify-end sm:gap-2">
           {activeTab === "reader" && (
-            <div className="flex items-center gap-1 rounded-xl border border-[#cdbb86] bg-white px-2 py-1">
+            <>
+              {/* Fit Mode Toggle */}
               <button
                 type="button"
-                onClick={() => adjustZoom(-0.15)}
-                disabled={zoomScale <= 0.75}
-                className="grid h-7 w-7 place-items-center rounded-lg text-[#155029] hover:bg-[#f8edd0] disabled:opacity-40"
-                title="تصغير"
+                onClick={() => setFitMode(m => (m === "width" ? "page" : "width"))}
+                className="inline-flex h-8 items-center gap-1 rounded-xl border border-[#cdbb86] bg-[#fbf9f2] px-2.5 text-xs font-bold text-[#155029] transition-colors hover:bg-[#f8edd0] sm:h-9"
+                title={fitMode === "width" ? "التبديل إلى ملاءمة كامل الصفحة" : "التبديل إلى ملاءمة العرض للقراءة"}
               >
-                <ZoomOut className="h-3.5 w-3.5" />
+                {fitMode === "width" ? (
+                  <>
+                    <Minimize2 className="h-3.5 w-3.5 text-[#a67017]" />
+                    <span className="hidden sm:inline">كامل الصفحة</span>
+                  </>
+                ) : (
+                  <>
+                    <Maximize2 className="h-3.5 w-3.5 text-[#a67017]" />
+                    <span className="hidden sm:inline">ملاءمة العرض</span>
+                  </>
+                )}
               </button>
-              <button
-                type="button"
-                onClick={resetZoom}
-                className="px-2 text-xs font-extrabold text-[#155029] hover:text-[#a67017]"
-                title="إعادة ضبط الحجم"
-              >
-                {Math.round(zoomScale * 100)}%
-              </button>
-              <button
-                type="button"
-                onClick={() => adjustZoom(0.15)}
-                disabled={zoomScale >= 1.75}
-                className="grid h-7 w-7 place-items-center rounded-lg text-[#155029] hover:bg-[#f8edd0] disabled:opacity-40"
-                title="تكبير"
-              >
-                <ZoomIn className="h-3.5 w-3.5" />
-              </button>
-            </div>
+
+              {/* Zoom Controls */}
+              <div className="flex items-center gap-0.5 rounded-xl border border-[#cdbb86] bg-white px-1.5 py-1">
+                <button
+                  type="button"
+                  onClick={() => adjustZoom(-0.15)}
+                  disabled={zoomScale <= 0.75}
+                  className="grid h-6 w-6 place-items-center rounded-lg text-[#155029] hover:bg-[#f8edd0] disabled:opacity-40"
+                  title="تصغير"
+                >
+                  <ZoomOut className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={resetZoom}
+                  className="px-1 text-[11px] font-extrabold text-[#155029] hover:text-[#a67017]"
+                  title="إعادة ضبط الحجم"
+                >
+                  {Math.round(zoomScale * 100)}%
+                </button>
+                <button
+                  type="button"
+                  onClick={() => adjustZoom(0.15)}
+                  disabled={zoomScale >= 1.75}
+                  className="grid h-6 w-6 place-items-center rounded-lg text-[#155029] hover:bg-[#f8edd0] disabled:opacity-40"
+                  title="تكبير"
+                >
+                  <ZoomIn className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </>
           )}
 
+          {/* Direct Open in New Tab */}
           <a
             href={preview.url}
             target="_blank"
             rel="noopener noreferrer"
             onClick={onDownload}
-            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-[#cdbb86] bg-white px-3.5 text-xs font-bold text-[#155029] transition-colors hover:bg-[#f8edd0]"
+            className="inline-flex h-8 items-center justify-center gap-1 rounded-full border border-[#cdbb86] bg-white px-2.5 text-xs font-bold text-[#155029] transition-colors hover:bg-[#f8edd0] sm:h-9 sm:px-3.5"
             title="فتح في علامة تبويب جديدة"
           >
-            <span>نافذة مستقلة</span>
+            <span className="hidden sm:inline">نافذة مستقلة</span>
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
 
+          {/* Download PDF Button */}
           <button
             type="button"
             onClick={onDownload}
             disabled={isDownloading}
-            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-[#155029] px-4 text-xs font-bold text-white transition-colors hover:bg-[#10461f] disabled:cursor-wait disabled:opacity-70"
+            className="inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-[#155029] px-3 text-xs font-bold text-white transition-colors hover:bg-[#10461f] disabled:cursor-wait disabled:opacity-70 sm:h-9 sm:px-4"
           >
             {isDownloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-            <span>تحميل PDF</span>
+            <span className="hidden sm:inline">تحميل PDF</span>
           </button>
         </div>
       </div>
@@ -1108,7 +1176,9 @@ function PdfReader({
       {/* Main View Area: Document Reader Container (Kept in DOM to preserve loaded state & speed) */}
       <div
         ref={readerRef}
-        className={`relative flex h-[62dvh] min-h-80 max-h-[44rem] items-center justify-center overflow-auto rounded-2xl border border-[#d9c995] bg-[#e6ede0] p-3 sm:h-[66dvh] sm:min-h-[30rem] sm:p-4 ${
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        className={`relative flex flex-1 min-h-0 items-center justify-center overflow-auto rounded-xl border border-[#d9c995] bg-[#e6ede0] p-1.5 sm:rounded-2xl sm:p-4 sm:h-[66dvh] sm:min-h-[30rem] sm:max-h-[44rem] ${
           activeTab === "reader" ? "" : "hidden"
         }`}
       >
@@ -1142,7 +1212,7 @@ function PdfReader({
           error={null}
         >
           {!loadError && readerSize.width > 0 && (
-            <div className="flex justify-center p-2">
+            <div className="flex justify-center p-1 sm:p-2">
               <Page
                 pageNumber={pageNumber}
                 width={pageWidth}
@@ -1159,6 +1229,45 @@ function PdfReader({
             </div>
           )}
         </Document>
+
+        {/* Mobile Floating Thumb Navigation Pill */}
+        {activeTab === "reader" && !loadError && (
+          <div className="pointer-events-none absolute bottom-3 inset-x-0 z-20 flex justify-center px-4 sm:hidden">
+            <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-[#cdbb86]/80 bg-white/95 px-3 py-1.5 shadow-[0_6px_20px_rgba(21,80,41,0.2)] backdrop-blur-md">
+              <button
+                type="button"
+                onClick={() => changePage(-1)}
+                disabled={pageNumber <= 1}
+                className="grid h-8 w-8 place-items-center rounded-full text-[#155029] active:bg-[#f8edd0] disabled:opacity-30"
+                aria-label="الصفحة السابقة"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+              <span className="min-w-16 text-center text-xs font-extrabold text-[#155029] select-none">
+                {pageNumber} / {pageCount || meta.pages || "—"}
+              </span>
+              <button
+                type="button"
+                onClick={() => changePage(1)}
+                disabled={!pageCount || pageNumber >= pageCount}
+                className="grid h-8 w-8 place-items-center rounded-full text-[#155029] active:bg-[#f8edd0] disabled:opacity-30"
+                aria-label="الصفحة التالية"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <div className="mx-0.5 h-4 w-px bg-[#d9c995]" />
+              <button
+                type="button"
+                onClick={() => setFitMode(m => (m === "width" ? "page" : "width"))}
+                className="grid h-8 w-8 place-items-center rounded-full text-[#a67017] active:bg-[#f8edd0]"
+                title={fitMode === "width" ? "عرض كامل الصفحة" : "ملاءمة العرض"}
+                aria-label="تبديل وضع العرض"
+              >
+                {fitMode === "width" ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              </button>
+            </div>
+          </div>
+        )}
 
         {loadError && (
           <div className="grid min-h-72 place-items-center px-6 text-center">
@@ -1193,7 +1302,7 @@ function PdfReader({
 
       {/* Document Outline & Architecture Tab (Kept in DOM and toggled for instantaneous switching) */}
       <div
-        className={`h-[62dvh] min-h-80 max-h-[44rem] overflow-y-auto rounded-2xl border border-[#d9c995] bg-white p-4 sm:p-6 ${
+        className={`flex-1 min-h-0 overflow-y-auto rounded-xl border border-[#d9c995] bg-white p-3.5 sm:rounded-2xl sm:p-6 sm:h-[66dvh] sm:min-h-[30rem] sm:max-h-[44rem] ${
           activeTab === "outline" ? "" : "hidden"
         }`}
       >
@@ -1284,9 +1393,9 @@ function PdfReader({
         )}
       </div>
 
-      {/* Bottom Page Thumbnails Bar (Fast switcher) */}
+      {/* Bottom Page Thumbnails Bar (Fast switcher on tablets & desktops) */}
       {(pageCount > 1 || meta.pages > 1) && (
-        <div className="flex items-center justify-between rounded-xl border border-[#d9c995] bg-white px-3 py-2 text-xs">
+        <div className="hidden sm:flex items-center justify-between rounded-xl border border-[#d9c995] bg-white px-3 py-2 text-xs">
           <div className="flex items-center gap-2 overflow-x-auto py-1">
             <span className="shrink-0 font-bold text-[#55755e]">الانتقال السريع:</span>
             {Array.from({ length: Math.min(pageCount || meta.pages, 12) }).map((_, idx) => {
@@ -1609,7 +1718,7 @@ export default function GovernanceLibrary() {
                         documentCategory: item.documentCategory,
                       })
                     }
-                    className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full border border-[#cdbb86] bg-[#fdfcf7] px-4 text-xs font-bold text-[#155029] transition-all hover:bg-[#f8edd0] hover:border-[#155029]"
+                    className="inline-flex h-10 flex-1 sm:flex-none items-center justify-center gap-1.5 rounded-full border border-[#cdbb86] bg-[#fdfcf7] px-4 text-xs font-bold text-[#155029] transition-all hover:bg-[#f8edd0] hover:border-[#155029]"
                     aria-label={`استعراض ${item.title}`}
                   >
                     <Eye className="h-4 w-4 text-[#a67017]" />
@@ -1666,11 +1775,11 @@ export default function GovernanceLibrary() {
           </div>
 
           {/* Quick Category Tabs Pills */}
-          <div className="mt-8 flex flex-wrap items-center gap-2">
+          <div className="mt-8 -mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-2 no-scrollbar sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
             <button
               type="button"
               onClick={() => setCategoryFilter("all")}
-              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all ${
+              className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all ${
                 categoryFilter === "all"
                   ? "bg-[#155029] text-white shadow-sm"
                   : "border border-[#cdbb86] bg-white text-[#155029] hover:bg-[#f8edd0]"
@@ -1686,7 +1795,7 @@ export default function GovernanceLibrary() {
               <button
                 type="button"
                 onClick={() => setCategoryFilter("manual")}
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all ${
+                className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all ${
                   categoryFilter === "manual"
                     ? "bg-[#155029] text-white shadow-sm"
                     : "border border-[#cdbb86] bg-white text-[#155029] hover:bg-[#f8edd0]"
@@ -1704,7 +1813,7 @@ export default function GovernanceLibrary() {
               <button
                 type="button"
                 onClick={() => setCategoryFilter("policy")}
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all ${
+                className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all ${
                   categoryFilter === "policy"
                     ? "bg-[#155029] text-white shadow-sm"
                     : "border border-[#cdbb86] bg-white text-[#155029] hover:bg-[#f8edd0]"
@@ -1722,7 +1831,7 @@ export default function GovernanceLibrary() {
               <button
                 type="button"
                 onClick={() => setCategoryFilter("sop")}
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all ${
+                className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all ${
                   categoryFilter === "sop"
                     ? "bg-[#155029] text-white shadow-sm"
                     : "border border-[#cdbb86] bg-white text-[#155029] hover:bg-[#f8edd0]"
@@ -1740,7 +1849,7 @@ export default function GovernanceLibrary() {
               <button
                 type="button"
                 onClick={() => setCategoryFilter("strategy")}
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all ${
+                className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all ${
                   categoryFilter === "strategy"
                     ? "bg-[#155029] text-white shadow-sm"
                     : "border border-[#cdbb86] bg-white text-[#155029] hover:bg-[#f8edd0]"
@@ -1758,7 +1867,7 @@ export default function GovernanceLibrary() {
               <button
                 type="button"
                 onClick={() => setCategoryFilter("annual_report")}
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all ${
+                className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all ${
                   categoryFilter === "annual_report"
                     ? "bg-[#155029] text-white shadow-sm"
                     : "border border-[#cdbb86] bg-white text-[#155029] hover:bg-[#f8edd0]"
@@ -1966,16 +2075,16 @@ export default function GovernanceLibrary() {
         }}
       >
         <DialogContent
-          className="max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] overflow-y-auto rounded-[1.8rem] border-[#d9c995] bg-[#fbf8ed] p-3 sm:w-[min(94vw,76rem)] sm:max-w-[min(94vw,76rem)] sm:rounded-2xl sm:p-6"
+          className="flex h-[100dvh] max-h-[100dvh] w-full max-w-full flex-col overflow-hidden rounded-none border-0 bg-[#fbf8ed] p-2.5 sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:w-[min(94vw,76rem)] sm:max-w-[min(94vw,76rem)] sm:rounded-2xl sm:border sm:border-[#d9c995] sm:p-6"
           dir="rtl"
         >
-          <DialogHeader className="text-right">
-            <div className="flex flex-wrap items-center justify-between gap-2 pl-8">
-              <DialogTitle className="display-font text-xl font-extrabold text-[#155029] sm:text-2xl">
+          <DialogHeader className="shrink-0 text-right pr-10 sm:pr-8">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <DialogTitle className="display-font text-lg font-extrabold text-[#155029] sm:text-2xl">
                 معاينة واستعراض الوثيقة
               </DialogTitle>
             </div>
-            <DialogDescription className="text-sm font-bold text-[#55755e]">
+            <DialogDescription className="truncate text-xs font-bold text-[#55755e] sm:text-sm">
               {preview?.title}
             </DialogDescription>
           </DialogHeader>
