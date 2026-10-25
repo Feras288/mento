@@ -197,7 +197,7 @@ export default function NewsDetail() {
               <img
                 src={news.imageUrl}
                 alt={news.title}
-                className="warm-documentary max-h-[34rem] w-full object-cover"
+                className="warm-documentary block h-auto w-full object-contain"
               />
             </figure>
           )}
