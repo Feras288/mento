@@ -1,0 +1,17 @@
+# =============================================================================
+# Coolify Railpack / Nixpacks Deployment Configuration
+# =============================================================================
+
+[variables]
+PORT = "3002"
+NODE_ENV = "production"
+UPLOADS_DIR = "/data/uploads"
+
+[phases.setup]
+nixPkgs = ["nodejs_22", "pnpm"]
+
+[phases.build]
+cmds = ["pnpm run build"]
+
+[start]
+cmd = "node dist/index.js"

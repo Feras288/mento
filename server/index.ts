@@ -1,5 +1,6 @@
 import express from "express";
 import { createServer } from "http";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -10,23 +11,32 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // Serve static files from dist/public in production
-  const staticPath =
+  const possiblePaths = [
+    path.resolve(process.cwd(), "dist", "public"),
     process.env.NODE_ENV === "production"
       ? path.resolve(__dirname, "public")
-      : path.resolve(__dirname, "..", "dist", "public");
+      : path.resolve(__dirname, "..", "dist", "public"),
+  ];
 
-  app.use(express.static(staticPath));
+  const staticPath = possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
+
+  app.use(express.static(staticPath, { maxAge: "1d" }));
 
   // Handle client-side routing - serve index.html for all routes
   app.get("*", (_req, res) => {
-    res.sendFile(path.join(staticPath, "index.html"));
+    const indexPath = path.join(staticPath, "index.html");
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).send("Application client build not found. Please build the client first.");
+    }
   });
 
-  const port = process.env.PORT || 3002;
+  const port = parseInt(process.env.PORT || "3002", 10);
+  const host = "0.0.0.0";
 
-  server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+  server.listen(port, host, () => {
+    console.log(`Server running on http://${host}:${port}/ (PORT=${port})`);
   });
 }
 

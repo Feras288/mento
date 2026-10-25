@@ -10,6 +10,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerPdfPreviewRoute } from "../pdfPreview";
+import { initUploadsStorage, UPLOADS_DIR, DEFAULT_UPLOADS_DIR } from "../storage";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -21,7 +22,7 @@ function isPortAvailable(port: number): Promise<boolean> {
   });
 }
 
-async function findAvailablePort(startPort: number = 3000): Promise<number> {
+async function findAvailablePort(startPort: number = 3002): Promise<number> {
   for (let port = startPort; port < startPort + 20; port++) {
     if (await isPortAvailable(port)) {
       return port;
@@ -38,13 +39,18 @@ async function startServer() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-  // Serve uploaded files statically from local uploads directory
-  const uploadsDir = path.resolve(process.cwd(), "uploads");
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
+  // Initialize persistent uploads storage (supports UPLOADS_DIR=/data/uploads)
+  initUploadsStorage();
+
+  // Primary static serving for uploaded files
+  app.use("/storage", express.static(UPLOADS_DIR));
+  app.use("/manus-storage", express.static(UPLOADS_DIR));
+
+  // Fallback to project ./uploads directory if UPLOADS_DIR is custom and seed files reside in repository
+  if (UPLOADS_DIR !== DEFAULT_UPLOADS_DIR && fs.existsSync(DEFAULT_UPLOADS_DIR)) {
+    app.use("/storage", express.static(DEFAULT_UPLOADS_DIR));
+    app.use("/manus-storage", express.static(DEFAULT_UPLOADS_DIR));
   }
-  app.use("/storage", express.static(uploadsDir));
-  app.use("/manus-storage", express.static(uploadsDir));
 
   registerPdfPreviewRoute(app);
   registerOAuthRoutes(app);
@@ -58,23 +64,30 @@ async function startServer() {
     })
   );
 
-  // development mode uses Vite, production mode uses static files
+  // Development mode uses Vite HMR, production mode serves built static assets
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
 
-  const preferredPort = parseInt(process.env.PORT || "3000");
-  const port = await findAvailablePort(preferredPort);
+  const configuredPort = parseInt(process.env.PORT || "3002", 10);
+  const host = "0.0.0.0";
 
-  if (port !== preferredPort) {
-    console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
+  // In production (e.g. Coolify Railpack container), bind strictly to the configured PORT on 0.0.0.0
+  if (process.env.NODE_ENV === "production") {
+    server.listen(configuredPort, host, () => {
+      console.log(`[Production] Server listening on http://${host}:${configuredPort} (PORT=${configuredPort})`);
+    });
+  } else {
+    const port = await findAvailablePort(configuredPort);
+    if (port !== configuredPort) {
+      console.log(`Port ${configuredPort} is busy, using port ${port} instead`);
+    }
+    server.listen(port, () => {
+      console.log(`[Development] Server listening on http://localhost:${port}/`);
+    });
   }
-
-  server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
-  });
 }
 
 startServer().catch(console.error);
